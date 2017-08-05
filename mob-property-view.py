@@ -4,6 +4,9 @@ from pyVmomi import vim, vmodl
 import ssl
 import atexit
 import argparse
+import re
+import types
+from getpass import getpass
 from collections import defaultdict
 __license__ = 'MIT'
 
@@ -16,7 +19,7 @@ def options():
     """
     parser = argparse.ArgumentParser(prog='mob-property-view',
                                      add_help=True,
-                                     description='Management Objectのプロパティ内容を表示します')
+                                     description='Management ObjectのPropertyやMethod一覧を表示します')
     parser.add_argument('--host', '-vc',
                         type=str, required=True,
                         help='vCenterのIP又はホスト名')
@@ -24,7 +27,7 @@ def options():
                         type=str, default='administrator@vsphere.local',
                         help='vCenterのログインユーザー名(default:administrator@vsphere.local)')
     parser.add_argument('--password', '-p',
-                        type=str, required=True,
+                        type=str,
                         help='vCenterのログインユーザーパスワード')
     parser.add_argument('--mob',
                         type=str, required=True,
@@ -40,7 +43,13 @@ def options():
     parser.add_argument('--property-list', '-pl',
                         action='store_true',
                         help='MOBの親プロパティ一覧を表示')
+    parser.add_argument('--method-list', '-ml',
+                        action='store_true',
+                        help='MOBのメソッド一覧を表示')
     args = parser.parse_args()
+
+    if(not(args.password)):
+        args.password = getpass()
 
     return args
 
@@ -112,38 +121,49 @@ def get_mob_info(content, mob, targets):
 
     return r_array
 
-def get_property_recursively(mob_list):
+def get_property_and_method_recursively(mob_list):
     """
     mobのプロパティ情報を再帰的に取得する。
 
     :rtype mob_propertys: dict
     :return mob_propertys: プロパティ情報の辞書を返す
 
+    :rtype mob_methods: dict
+    :return mob_methods: メソッド情報の辞書を返す
+
     :rtype fail_list: dict
     :return fail_list: 取得に失敗したプロパティ情報の辞書を返す
     """
     mob_propertys = multi_dimension_dict(2)
+    mob_methods = multi_dimension_dict(2)
     fail_list = multi_dimension_dict(2)
     for mob in mob_list:
         for n in dir(mob):
             try:
-                mob_propertys[mob.name][n] = getattr(mob, n)
+                if(not(re.match(r'^_', n)) and
+                (re.search(r'pyVmomi|NoneType', str(type(getattr(mob,n)))) or
+                isinstance(getattr(mob,n), str))):
+                    mob_propertys[mob.name][n] = getattr(mob, n)
+
+                if(not(re.match(r'^_', n)) and isinstance(getattr(mob,n), types.FunctionType)):
+                    mob_methods[mob.name][n] = n
+
             except:
                 fail_list[mob.name][n] = 'fail'
 
-    return mob_propertys, fail_list
+    return mob_propertys, mob_methods, fail_list
 
-def output_property_title(property_name):
+def output_title(title):
     """
-    プロパティ名やMOB名を#で囲んで表示する
+    プロパティ名やMOB名をパイプとハイフンで囲んで表示する
 
-    :type property_name: str
-    :param property_name: プロパティ名
+    :type title: str
+    :param title: 名前
     """
-    for num in range(0,len(property_name)+4): print('-', end='')
+    for num in range(0,len(title)+4): print('-', end='')
     print()
-    print('| %s |' % property_name)
-    for num in range(0,len(property_name)+4): print('-', end='')
+    print('| %s |' % title)
+    for num in range(0,len(title)+4): print('-', end='')
     print()
 
 def main(args):
@@ -167,31 +187,39 @@ def main(args):
     # mobリストを取得
     mob_list = get_mob_info(content, args.mob, args.target)
 
-    # mobのpropertyを表示
-    mob_propertys, fail_list = get_property_recursively(mob_list)
-    for mob_name in mob_propertys.keys():
-        output_property_title(mob_name)
-        if(args.property):
-            property_name = args.property
-            output_property_title(property_name)
-            if((property_name in mob_propertys[mob_name])):
-                print(mob_propertys[mob_name][property_name])
+    # mobのpropertyとmethodを取得
+    mob_propertys, mob_methods, fail_list = get_property_and_method_recursively(mob_list)
+
+    # mobのproperty又はmethodを表示する
+    if(args.method_list):
+        for mob_name in sorted(mob_methods.keys(), key=str.lower):
+            output_title(mob_name)
+            for method_name in sorted(mob_methods[mob_name].keys()):
+                print(method_name)
+    else:
+        for mob_name in sorted(mob_propertys.keys(), key=str.lower):
+            output_title(mob_name)
+            if(args.property):
+                property_name = args.property
+                output_title(property_name)
+                if((property_name in mob_propertys[mob_name])):
+                    print(mob_propertys[mob_name][property_name])
+                else:
+                    print("指定した %s プロパティは存在しません" % property_name)
+            elif(args.property_list):
+                for property_name in sorted(mob_propertys[mob_name].keys()):
+                    print(property_name)
             else:
-                print("指定した %s プロパティは存在しません" % property_name)
-        elif(args.property_list):
-            for property_name in sorted(mob_propertys[mob_name].keys()):
-                print(property_name)
-        else:
-            for property_name in sorted(mob_propertys[mob_name].keys()):
-                output_property_title(property_name)
-                print(mob_propertys[mob_name][property_name])
-        print()
+                for property_name in sorted(mob_propertys[mob_name].keys()):
+                    output_title(property_name)
+                    print(mob_propertys[mob_name][property_name])
+    print()
 
     # プロパティ取得に失敗したものがあった場合に失敗したプロパティを表示
     if(fail_list):
-        for mob_name in fail_list.keys():
-            output_property_title('Fail MOB Name : %s' % mob_name)
-            for property_name in fail_list[mob_name].keys():
+        for mob_name in sorted(fail_list.keys(), key=str.lower):
+            output_title('Fail MOB Name : %s' % mob_name)
+            for property_name in sorted(fail_list[mob_name].keys()):
                 print(property_name)
             print()
 
