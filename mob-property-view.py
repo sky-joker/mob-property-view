@@ -32,7 +32,8 @@ def options():
     parser.add_argument('--mob',
                         type=str, required=True,
                         choices=['Datacenter', 'ClusterComputeResource', 'HostSystem',
-                        'Datastore', 'Folder', 'Network', 'ResourcePool', 'VirtualMachine'],
+                        'Datastore', 'Folder', 'Network', 'ResourcePool', 'VirtualMachine',
+                        'DistributedVirtualSwitch', 'DistributedVirtualPortgroup'],
                         help='取得したい対象のmobを指定')
     parser.add_argument('--target', '-t',
                         type=str, nargs='+',
@@ -85,6 +86,8 @@ def str_to_pyvmomi_class(args):
     pyvmomi_class['Datastore'] = vim.Datastore
     pyvmomi_class['Folder'] = vim.Folder
     pyvmomi_class['Network'] = vim.Network
+    pyvmomi_class['DistributedVirtualSwitch'] = vim.DistributedVirtualSwitch
+    pyvmomi_class['DistributedVirtualPortgroup'] = vim.dvs.DistributedVirtualPortgroup
     pyvmomi_class['ResourcePool'] = vim.ResourcePool
     pyvmomi_class['VirtualMachine'] = vim.VirtualMachine
 
