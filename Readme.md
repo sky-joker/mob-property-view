@@ -23,12 +23,16 @@ $ chmod +x mob-property-view/mob-property-view.py
 
 ## 使い方
 
-指定可能なMOB
+指定可能なManaged Objects
 
 * Datacenter
+* ClusterComputeResource
+* HostSystem
 * Datastore
 * Folder
 * Network
+* DistributedVirtualSwitch
+* DistributedVirtualPortgroup
 * ResourcePool
 * VirtualMachine
 
@@ -38,7 +42,7 @@ $ chmod +x mob-property-view/mob-property-view.py
 $ ./mob-property-view.py -h
 usage: mob-property-view [-h] --host HOST [--username USERNAME]
                          [--password PASSWORD] --mob
-                         {Datacenter,Datastore,Folder,Network,ResourcePool,VirtualMachine}
+                         {Datacenter,ClusterComputeResource,HostSystem,Datastore,Folder,Network,ResourcePool,VirtualMachine,DistributedVirtualSwitch,DistributedVirtualPortgroup}
                          [--target TARGET [TARGET ...]]
                          [--property property name] [--property-list]
                          [--method-list]
@@ -53,7 +57,7 @@ optional arguments:
                         vCenterのログインユーザー名(default:administrator@vsphere.local)
   --password PASSWORD, -p PASSWORD
                         vCenterのログインユーザーパスワード
-  --mob {Datacenter,Datastore,Folder,Network,ResourcePool,VirtualMachine}
+  --mob {Datacenter,ClusterComputeResource,HostSystem,Datastore,Folder,Network,ResourcePool,VirtualMachine,DistributedVirtualSwitch,DistributedVirtualPortgroup}
                         取得したい対象のmobを指定
   --target TARGET [TARGET ...], -t TARGET [TARGET ...]
                         MOBの名前(nameプロパティのもの)を指定
