@@ -18,7 +18,9 @@ $ git clone https://github.com/sky-joker/mob-property-view.git
 実行権限を付与
 
 ```bash
-$ chmod +x mob-property-view/mob-property-view.py
+$ cd mob-property-view/
+$ pip3 install -r requirements.txt
+$ chmod +x mob-property-view.py
 ```
 
 ## 使い方
