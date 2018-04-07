@@ -31,7 +31,7 @@ def options():
                         help='vCenterのログインユーザーパスワード')
     parser.add_argument('--mob',
                         type=str, required=True,
-                        choices=['Datacenter', 'ClusterComputeResource', 'HostSystem',
+                        choices=['Datacenter', 'ClusterComputeResource', 'ComputeResource', 'HostSystem',
                         'Datastore', 'Folder', 'Network', 'ResourcePool', 'VirtualMachine',
                         'DistributedVirtualSwitch', 'DistributedVirtualPortgroup'],
                         help='取得したい対象のmobを指定')
@@ -82,6 +82,7 @@ def str_to_pyvmomi_class(args):
     pyvmomi_class = {}
     pyvmomi_class['Datacenter'] = vim.Datacenter
     pyvmomi_class['ClusterComputeResource'] = vim.ClusterComputeResource
+    pyvmomi_class['ComputeResource'] = vim.ComputeResource
     pyvmomi_class['HostSystem'] = vim.HostSystem
     pyvmomi_class['Datastore'] = vim.Datastore
     pyvmomi_class['Folder'] = vim.Folder
