@@ -1,4 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, division, print_function
 from pyVim.connect import SmartConnect, Disconnect
 from pyVmomi import vim, vmodl
 import ssl

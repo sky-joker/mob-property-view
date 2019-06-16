@@ -4,7 +4,7 @@ VMwareのManagement Object(MOB)のPropertyやData Object、Methodを一覧表示
 
 ## 必要条件
 
-* python3
+* python2/3
 * pyvmomi
 
 ## インストール
