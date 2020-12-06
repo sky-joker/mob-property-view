@@ -133,8 +133,8 @@ def get_property_and_method_recursively(mob_list):
     """
     mobのプロパティ情報を再帰的に取得する。
 
-    :rtype mob_propertys: dict
-    :return mob_propertys: プロパティ情報の辞書を返す
+    :rtype mob_properties: dict
+    :return mob_properties: プロパティ情報の辞書を返す
 
     :rtype mob_methods: dict
     :return mob_methods: メソッド情報の辞書を返す
@@ -142,24 +142,27 @@ def get_property_and_method_recursively(mob_list):
     :rtype fail_list: dict
     :return fail_list: 取得に失敗したプロパティ情報の辞書を返す
     """
-    mob_propertys = multi_dimension_dict(2)
+    mob_properties = multi_dimension_dict(2)
     mob_methods = multi_dimension_dict(2)
     fail_list = multi_dimension_dict(2)
     for mob in mob_list:
         for n in dir(mob):
             try:
                 if(not(re.match(r'^_', n)) and
-                (re.search(r'pyVmomi|NoneType', str(type(getattr(mob,n)))) or
-                isinstance(getattr(mob,n), str))):
-                    mob_propertys[mob.name][n] = getattr(mob, n)
+                        (re.search(r'pyVmomi|NoneType', str(type(getattr(mob,n)))) or
+                         isinstance(getattr(mob,n), str))):
+                    mob_properties[mob.name][n] = getattr(mob, n)
 
                 if(not(re.match(r'^_', n)) and isinstance(getattr(mob,n), types.FunctionType)):
                     mob_methods[mob.name][n] = n
 
+                if not 'moId' in mob_properties[mob.name]:
+                    mob_properties[mob.name]['moId'] = mob._moId
+
             except:
                 fail_list[mob.name][n] = 'fail'
 
-    return mob_propertys, mob_methods, fail_list
+    return mob_properties, mob_methods, fail_list
 
 def output_title(title):
     """
@@ -196,7 +199,7 @@ def main(args):
     mob_list = get_mob_info(content, args.mob, args.target)
 
     # mobのpropertyとmethodを取得
-    mob_propertys, mob_methods, fail_list = get_property_and_method_recursively(mob_list)
+    mob_properties, mob_methods, fail_list = get_property_and_method_recursively(mob_list)
 
     # mobのproperty又はmethodを表示する
     if(args.method_list):
@@ -205,22 +208,22 @@ def main(args):
             for method_name in sorted(mob_methods[mob_name].keys()):
                 print(method_name)
     else:
-        for mob_name in sorted(mob_propertys.keys(), key=str.lower):
+        for mob_name in sorted(mob_properties.keys(), key=str.lower):
             output_title(mob_name)
             if(args.property):
                 property_name = args.property
                 output_title(property_name)
-                if((property_name in mob_propertys[mob_name])):
-                    print(mob_propertys[mob_name][property_name])
+                if((property_name in mob_properties[mob_name])):
+                    print(mob_properties[mob_name][property_name])
                 else:
                     print("指定した %s プロパティは存在しません" % property_name)
             elif(args.property_list):
-                for property_name in sorted(mob_propertys[mob_name].keys()):
+                for property_name in sorted(mob_properties[mob_name].keys()):
                     print(property_name)
             else:
-                for property_name in sorted(mob_propertys[mob_name].keys()):
+                for property_name in sorted(mob_properties[mob_name].keys()):
                     output_title(property_name)
-                    print(mob_propertys[mob_name][property_name])
+                    print(mob_properties[mob_name][property_name])
     print()
 
     # プロパティ取得に失敗したものがあった場合に失敗したプロパティを表示
